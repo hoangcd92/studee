@@ -1,7 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { firestore } from '../firebase/firebase';
 
 function ArticleList() {
+  const [articles, setArticles] = useState([]);
+
+  useEffect(() => {
+    firestore
+      .collection('articles')
+      .get()
+      .then((docs) => {
+        const articlesList = [];
+        docs.forEach((doc) => {
+          articlesList.push({ id: doc.id, title: doc.data().title });
+        });
+        setArticles(articlesList);
+      });
+  }, []);
+
   return (
     <div className="ArticleList">
       <h2 className="ArticleList__title">Article List</h2>
@@ -10,15 +26,13 @@ function ArticleList() {
       </Link>
       <div className="ArticleList__list">
         <ul>
-          <li>
-            <Link to="/articles/1">
-              <h3>
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Modi,
-                commodi.
-              </h3>
-            </Link>
-            <p>21 Sep 2020</p>
-          </li>
+          {articles.map((article) => (
+            <li key={article.id}>
+              <Link to={`/articles/${article.id}`}>
+                <h3>{article.title}</h3>
+              </Link>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

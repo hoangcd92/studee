@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Editor, EditorState, RichUtils, convertToRaw } from 'draft-js';
+import {
+  Editor,
+  EditorState,
+  RichUtils,
+  convertToRaw,
+  convertFromRaw,
+} from 'draft-js';
 
 const INLINE_STYLES = [
   'BOLD',
@@ -23,15 +29,17 @@ const STYLE_MAP = {
   },
 };
 
-function TextEditor({ readOnly }) {
+function TextEditor({ readOnly, content, setContent }) {
   const [editorState, setEditorState] = useState(() =>
     EditorState.createEmpty()
   );
 
   useEffect(() => {
-    const savedData = convertToRaw(editorState.getCurrentContent());
-    // console.log(savedData);
-  }, [editorState]);
+    if (content) {
+      const currentContent = convertFromRaw(content);
+      setEditorState(EditorState.createWithContent(currentContent));
+    }
+  }, [content]);
 
   function toggleInlineStyle(e, style) {
     e.preventDefault();
@@ -44,7 +52,6 @@ function TextEditor({ readOnly }) {
 
   function handleKeyCommand(command) {
     const newEditorState = RichUtils.handleKeyCommand(editorState, command);
-    console.log(command);
     if (newEditorState) {
       setEditorState(newEditorState);
       return 'handled';
@@ -84,20 +91,23 @@ function TextEditor({ readOnly }) {
       );
     });
   }
-  console.log(readOnly);
+  function converCurrentContentToRaw() {
+    const savedData = convertToRaw(editorState.getCurrentContent());
+    setContent(savedData);
+  }
 
   return (
     <>
-      {renderInlineStyleButton()}
-      {renderBlockTypeButton()}
+      {!readOnly && renderInlineStyleButton()}
+      {!readOnly && renderBlockTypeButton()}
       <div className="editor">
         <Editor
-          placeholder="Nhập nội dung..."
           customStyleMap={STYLE_MAP}
           editorState={editorState}
           onChange={setEditorState}
           handleKeyCommand={handleKeyCommand}
           readOnly={readOnly}
+          onBlur={converCurrentContentToRaw}
         />
       </div>
     </>
